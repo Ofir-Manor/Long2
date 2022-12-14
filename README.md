@@ -2,4 +2,4 @@
 <h2 align="center"> Intro to Machine Learning Course </h2>
 
 
-help
+help me
