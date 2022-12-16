@@ -48,9 +48,14 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         norm = np.linalg.norm(w)
 
         # TODO: complete the loss calculation
-        loss = 0.0
+        norm_sqr = np.square(norm)
+        zeros = np.zeros(shape = hinge_inputs.shape)
+        hinge_loss_inputs = 1 - hinge_inputs
+        hinge_loss = np.maximum(zeros, hinge_loss_inputs)
+        reg_hinge_loss = C * np.sum(hinge_loss)
+        loss = norm_sqr + reg_hinge_loss
 
-        return
+        return loss
 
     @staticmethod
     def subgradient(w, b: float, C: float, X, y):
@@ -65,8 +70,19 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         :return: a tuple with (the gradient of the weights, the gradient of the bias)
         """
         # TODO: calculate the analytical sub-gradient of soft-SVM w.r.t w and b
-        g_w = None
-        g_b = 0.0
+        margins = (X.dot(w) + b).reshape(-1, 1)
+        z = np.multiply(margins, y.reshape(-1, 1))
+        z_norm = 1 - z
+        zeros = np.zeros(shape = z.shape)
+        f_z = np.minimum(np.sign(z_norm), zeros)
+        f_z_y = np.multiply(f_z,y.reshape(-1,1))
+        f_z_y_x = (X.dot(f_z_y)).reshape(-1,1)
+        
+        reg_f_z_y = C * np.sum(f_z_y)
+        reg_f_z_y_x = C * np.sum(f_z_y_x)
+
+        g_w = (2 * w) + reg_f_z_y_x
+        g_b = reg_f_z_y 
 
         return g_w, g_b
 
