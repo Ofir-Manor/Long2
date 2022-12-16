@@ -1,8 +1,7 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from SoftSVM import SoftSVM
-
 def numerical_subgradient(w, b, C, X, y, delta=1e-4):
+    import numpy as np
+    from SoftSVM import SoftSVM
+
     w_ = w.copy()
     g_w = np.zeros_like(w_)
     orig_objective = SoftSVM.loss(w_, b, C, X, y)
@@ -18,6 +17,10 @@ def numerical_subgradient(w, b, C, X, y, delta=1e-4):
 
 
 def compare_gradients(X, y, deltas, C=1, REPEATS=100, figsize=(10, 6)):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from SoftSVM import SoftSVM
+
     residual_means = []
 
     for delta in deltas:
