@@ -70,16 +70,18 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         :return: a tuple with (the gradient of the weights, the gradient of the bias)
         """
         # TODO: calculate the analytical sub-gradient of soft-SVM w.r.t w and b
-        margins = (X.dot(w) + b).reshape(-1, 1)
+        margins = (X.dot(w) + b).reshape(-1,1)
         z = np.multiply(margins, y.reshape(-1, 1))
         z_norm = 1 - z
         zeros = np.zeros(shape = z.shape)
+
         f_z = np.minimum(np.sign(z_norm), zeros)
         f_z_y = np.multiply(f_z,y.reshape(-1,1))
-        f_z_y_x = (X.dot(f_z_y)).reshape(-1,1)
+        f_z_y_x = f_z_y * X
         
         reg_f_z_y = C * np.sum(f_z_y)
-        reg_f_z_y_x = C * np.sum(f_z_y_x)
+        reg_f_z_y_x = C * np.sum(f_z_y_x,axis=0)
+       
 
         g_w = (2 * w) + reg_f_z_y_x
         g_b = reg_f_z_y 
