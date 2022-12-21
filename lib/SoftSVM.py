@@ -124,7 +124,7 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
             batch_y = y[start_idx:end_idx]
 
             # TODO: Compute the (sub)gradient of the current *batch*
-            g_w, g_b = self.subgradient(w=self.w, b=self.b, C=self.c, X=batch_X, y=batch_y)
+            g_w, g_b = self.subgradient(w=self.w, b=self.b, C=self.C, X=batch_X, y=batch_y)
 
             # Perform a (sub)gradient step
             # TODO: update the learned parameters correctly
