@@ -124,12 +124,12 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
             batch_y = y[start_idx:end_idx]
 
             # TODO: Compute the (sub)gradient of the current *batch*
-            g_w, g_b = None, None
+            g_w, g_b = self.subgradient(w=self.w, b=self.b, C=self.c, X=batch_X, y=batch_y)
 
             # Perform a (sub)gradient step
             # TODO: update the learned parameters correctly
-            self.w = None
-            self.b = 0.0
+            self.w = self.w - g_w
+            self.b = self.b - g_b
 
             if keep_losses:
                 losses.append(self.loss(self.w, self.b, self.C, X, y))
@@ -160,5 +160,7 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         """
         # TODO: compute the predicted labels (+1 or -1)
         y_pred = None
+        margins = (X.dot(self.w) + self.b).reshape(-1,1)
+        y_pred = np.sign(margins)
 
         return y_pred
