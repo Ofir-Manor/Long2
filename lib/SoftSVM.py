@@ -162,5 +162,7 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         y_pred = None
         margins = (X.dot(self.w) + self.b).reshape(-1,1)
         y_pred = np.sign(margins)
+        where_0 = np.where(y_pred == 0)
+        y_pred[where_0] = 1
 
         return y_pred
