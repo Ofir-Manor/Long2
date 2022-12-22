@@ -128,8 +128,8 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
 
             # Perform a (sub)gradient step
             # TODO: update the learned parameters correctly
-            self.w = self.w - g_w
-            self.b = self.b - g_b
+            self.w = self.w - (self.lr * g_w)
+            self.b = self.b - (self.lr * g_b)
 
             if keep_losses:
                 losses.append(self.loss(self.w, self.b, self.C, X, y))
