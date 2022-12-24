@@ -1,11 +1,13 @@
 from sklearn.base import BaseEstimator, ClassifierMixin
 import numpy as np
 
+
 class SoftSVM(BaseEstimator, ClassifierMixin):
     """
     Custom C-Support Vector Classification.
     """
-    def __init__(self, C: float, lr: float = 1e-5, batch_size = 32):
+
+    def __init__(self, C: float, lr: float = 1e-5, batch_size=32):
         """
         Initialize an instance of this class.
         ** Do not edit this method **
@@ -31,7 +33,7 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         self.b = 0.0
 
     @staticmethod
-    def loss(w, b: float, C: float, X, y):
+    def loss(w: np.ndarray, b: float, C: float, X: np.ndarray, y: np.ndarray) -> float:
         """
         Compute the SVM objective loss.
 
@@ -45,25 +47,21 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         margins = (X.dot(w) + b).reshape(-1, 1)
         hinge_inputs = np.multiply(margins, y.reshape(-1, 1))
 
-        norm = np.linalg.norm(w)
-
         # TODO: complete the loss calculation
-        n = y.shape[0]
-
-        norm_sqr = np.square(norm)
-
-        zeros = np.zeros(shape = hinge_inputs.shape)
-        ones = np.ones(shape = hinge_inputs.shape)
-        hinge_loss_inputs = np.subtract(ones, hinge_inputs)
-        hinge_loss = np.maximum(zeros, hinge_loss_inputs)
-        reg_hinge_loss = C * np.sum(hinge_loss) / n
-
-        loss = norm_sqr + reg_hinge_loss
-
-        return loss
+        hinge_loss = np.maximum(0, 1 - hinge_inputs)
+        return np.power(np.linalg.norm(w), 2) + C * np.sum(hinge_loss)
 
     @staticmethod
-    def subgradient(w, b: float, C: float, X, y):
+    def __func_z(w: np.ndarray, b: float, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        """
+        Auxiliary private method to calculate f(z).
+        """
+        margins = (X.dot(w) + b).reshape(-1, 1)
+        z = np.multiply(margins, y.reshape(-1, 1))
+        return np.where(z < 1, -1, 0)
+
+    @staticmethod
+    def subgradient(w: np.ndarray, b: float, C: float, X: np.ndarray, y: np.ndarray) -> tuple:
         """
         Compute the (analytical) SVM objective sub-gradient.
 
@@ -75,24 +73,13 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         :return: a tuple with (the gradient of the weights, the gradient of the bias)
         """
         # TODO: calculate the analytical sub-gradient of soft-SVM w.r.t w and b
-        n = y.shape[0]
-
-        def func_z(w, X, y):
-            margins = (X.dot(w) + b).reshape(-1,1)
-            z = np.multiply(margins, y.reshape(-1, 1))
-            zeros = np.zeros(shape = z.shape)
-
-            return np.minimum(np.sign(z - 1), zeros)
-
-        g_w_prod = np.multiply(np.multiply(func_z(w, X, y), y.reshape(-1,1)),X)
-        g_w = 2*w + C * np.sum(g_w_prod) / n
-
-        g_b_no_reg = np.multiply(func_z(w, X, y),y.reshape(-1,1))
-        g_b = C * np.sum(g_b_no_reg) / n
-
+        func_z_vector = SoftSVM.__func_z(w, b, X, y)
+        func_z_y = np.multiply(func_z_vector, y.reshape(-1, 1))
+        g_w = np.multiply(2, w) + np.multiply(C, X.T.dot(func_z_y).reshape(-1))
+        g_b = C * np.sum(func_z_y)
         return g_w, g_b
 
-    def fit_with_logs(self, X, y, max_iter: int = 2000, keep_losses: bool = True):
+    def fit_with_logs(self, X: np.ndarray, y: np.ndarray, max_iter: int = 2000, keep_losses: bool = True) -> tuple:
         """
         Fit the model according to the given training data.
 
@@ -115,7 +102,7 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         permutation = np.random.permutation(len(y))
         X = X[permutation, :]
         y = y[permutation]
-        
+
         # Iterate over batches
         for iter in range(0, max_iter):
             start_idx = (iter * self.batch_size) % X.shape[0]
@@ -124,7 +111,7 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
             batch_y = y[start_idx:end_idx]
 
             # TODO: Compute the (sub)gradient of the current *batch*
-            g_w, g_b = self.subgradient(w=self.w, b=self.b, C=self.C, X=batch_X, y=batch_y)
+            g_w, g_b = self.subgradient(self.w, self.b, self.C, batch_X, batch_y)
 
             # Perform a (sub)gradient step
             # TODO: update the learned parameters correctly
@@ -137,7 +124,7 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
 
         return losses, accuracies
 
-    def fit(self, X, y, max_iter: int = 2000):
+    def fit(self, X: np.ndarray, y: np.ndarray, max_iter: int = 2000):
         """
         Fit the model according to the given training data.
         ** Do not edit this method **
@@ -150,7 +137,7 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
 
         return self
 
-    def predict(self, X):
+    def predict(self, X: np.ndarray):
         """
         Perform classification on samples in X.
 
@@ -159,10 +146,5 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
                  NOTE: the labels must be either +1 or -1
         """
         # TODO: compute the predicted labels (+1 or -1)
-        y_pred = None
-        margins = (X.dot(self.w) + self.b).reshape(-1,1)
-        y_pred = np.sign(margins)
-        where_0 = np.where(y_pred == 0)
-        y_pred[where_0] = 1
-
-        return y_pred
+        margins = (X.dot(self.w) + self.b).reshape(-1, 1)
+        return np.sign(margins) + (margins == 0)
