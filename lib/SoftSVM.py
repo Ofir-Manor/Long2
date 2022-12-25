@@ -46,8 +46,7 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         """
         margins = (X.dot(w) + b).reshape(-1, 1)
         hinge_inputs = np.multiply(margins, y.reshape(-1, 1))
-
-        # TODO: complete the loss calculation
+        # Calculate the loss:
         hinge_loss = np.maximum(0, 1 - hinge_inputs)
         return np.power(np.linalg.norm(w), 2) + C * np.sum(hinge_loss)
 
@@ -72,10 +71,12 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         :param y: targets for loss computation; array of shape (n_samples,)
         :return: a tuple with (the gradient of the weights, the gradient of the bias)
         """
-        # TODO: calculate the analytical sub-gradient of soft-SVM w.r.t w and b
+        # Pre-calculations:
         func_z_vector = SoftSVM.__func_z(w, b, X, y)
         func_z_y = np.multiply(func_z_vector, y.reshape(-1, 1))
+        # The analytical sub-gradient of soft-SVM w.r.t w:
         g_w = np.multiply(2, w) + np.multiply(C, X.T.dot(func_z_y).reshape(-1))
+        # The analytical sub-gradient of soft-SVM w.r.t b:
         g_b = C * np.sum(func_z_y)
         return g_w, g_b
 
@@ -110,11 +111,11 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
             batch_X = X[start_idx:end_idx, :]
             batch_y = y[start_idx:end_idx]
 
-            # TODO: Compute the (sub)gradient of the current *batch*
+            # Compute the (sub)gradient of the current *batch*:
             g_w, g_b = self.subgradient(self.w, self.b, self.C, batch_X, batch_y)
 
             # Perform a (sub)gradient step
-            # TODO: update the learned parameters correctly
+            # update the learned parameters correctly
             self.w = self.w - (self.lr * g_w)
             self.b = self.b - (self.lr * g_b)
 
@@ -145,6 +146,6 @@ class SoftSVM(BaseEstimator, ClassifierMixin):
         :return: Predicted class labels for samples in X; array of shape (n_samples,)
                  NOTE: the labels must be either +1 or -1
         """
-        # TODO: compute the predicted labels (+1 or -1)
+        # Compute the predicted labels (+1 or -1)
         margins = (X.dot(self.w) + self.b).reshape(-1, 1)
         return np.sign(margins) + (margins == 0)
